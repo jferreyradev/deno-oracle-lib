@@ -27,6 +27,8 @@ export type {
   StoredProcedureConfig,
   StoredProcedureParam,
   StoredProcedureResult,
+  ValidationRule,
+  ValidationSchema,
 } from "./src/types.ts";
 
 // Exportar constantes y configuraciones

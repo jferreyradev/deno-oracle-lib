@@ -3,11 +3,7 @@
  */
 
 import { querySQL } from "./connection.ts";
-import type {
-  StoredProcedureConfig,
-  StoredProcedureParam,
-  StoredProcedureResult,
-} from "./types.ts";
+import type { StoredProcedureConfig, StoredProcedureParam, StoredProcedureResult } from "./types.ts";
 
 export class StoredProcedureExecutor {
   private schema?: string;
@@ -27,9 +23,7 @@ export class StoredProcedureExecutor {
     const startTime = performance.now();
 
     try {
-      const fullProcedureName = this.schema
-        ? `${this.schema}.${procedureName}`
-        : procedureName;
+      const fullProcedureName = this.schema ? `${this.schema}.${procedureName}` : procedureName;
 
       // Construir la llamada al procedimiento
       const { sql, binds } = this.buildProcedureCall(
@@ -71,9 +65,7 @@ export class StoredProcedureExecutor {
     const startTime = performance.now();
 
     try {
-      const fullFunctionName = this.schema
-        ? `${this.schema}.${functionName}`
-        : functionName;
+      const fullFunctionName = this.schema ? `${this.schema}.${functionName}` : functionName;
 
       // Construir llamada a función con valor de retorno
       const { sql, binds } = this.buildFunctionCall(
@@ -130,9 +122,9 @@ export class StoredProcedureExecutor {
     } catch (error) {
       const executionTime = performance.now() - startTime;
       throw new Error(
-        `Error ejecutando bloque PL/SQL: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        } (Tiempo: ${executionTime.toFixed(2)}ms)`,
+        `Error ejecutando bloque PL/SQL: ${error instanceof Error ? error.message : "Error desconocido"} (Tiempo: ${
+          executionTime.toFixed(2)
+        }ms)`,
       );
     }
   }
@@ -219,9 +211,7 @@ export class StoredProcedureExecutor {
       return rows.map((row) => row.OBJECT_NAME as string);
     } catch (error) {
       throw new Error(
-        `Error listando procedimientos: ${
-          error instanceof Error ? error.message : "Error desconocido"
-        }`,
+        `Error listando procedimientos: ${error instanceof Error ? error.message : "Error desconocido"}`,
       );
     }
   }

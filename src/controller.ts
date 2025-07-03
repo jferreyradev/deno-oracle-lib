@@ -8,7 +8,14 @@ import { SqlBuilder } from "./sql-builder.ts";
 import { DataValidator } from "./validator.ts";
 import { EntityConfigManager } from "./entity-config.ts";
 import { StoredProcedureExecutor } from "./stored-procedure.ts";
-import type { EntityConfig, PaginatedResponse, QueryResult, SearchOptions, StoredProcedureResult, ValidationResult } from "./types.ts";
+import type {
+  EntityConfig,
+  PaginatedResponse,
+  QueryResult,
+  SearchOptions,
+  StoredProcedureResult,
+  ValidationResult,
+} from "./types.ts";
 
 export class GenericController {
   private entityConfig: EntityConfig;
@@ -343,7 +350,11 @@ export class GenericController {
 
       return result;
     } catch (error) {
-      throw new Error(`Error ejecutando procedimiento '${procedureName}': ${error instanceof Error ? error.message : "Error desconocido"}`);
+      throw new Error(
+        `Error ejecutando procedimiento '${procedureName}': ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`,
+      );
     }
   }
 
@@ -358,7 +369,9 @@ export class GenericController {
     try {
       return await this.storedProcedureExecutor.executeFunction(functionName, parameters, returnType);
     } catch (error) {
-      throw new Error(`Error ejecutando función '${functionName}': ${error instanceof Error ? error.message : "Error desconocido"}`);
+      throw new Error(
+        `Error ejecutando función '${functionName}': ${error instanceof Error ? error.message : "Error desconocido"}`,
+      );
     }
   }
 
@@ -379,7 +392,9 @@ export class GenericController {
 
       return result;
     } catch (error) {
-      throw new Error(`Error ejecutando bloque PL/SQL: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      throw new Error(
+        `Error ejecutando bloque PL/SQL: ${error instanceof Error ? error.message : "Error desconocido"}`,
+      );
     }
   }
 
@@ -390,7 +405,11 @@ export class GenericController {
     try {
       return await this.storedProcedureExecutor.getProcedureInfo(procedureName);
     } catch (error) {
-      throw new Error(`Error obteniendo información del procedimiento: ${error instanceof Error ? error.message : "Error desconocido"}`);
+      throw new Error(
+        `Error obteniendo información del procedimiento: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`,
+      );
     }
   }
 

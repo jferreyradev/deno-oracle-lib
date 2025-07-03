@@ -122,24 +122,28 @@ console.log(result.rows);
 // Consulta con paginación automática
 const paginatedResult = await querySQL(
   "SELECT * FROM usuarios ORDER BY nombre",
-  { limit: 10, offset: 0 }
+  { limit: 10, offset: 0 },
 );
 
 // Consulta con múltiples parámetros
-const complexResult = await querySQL(`
+const complexResult = await querySQL(
+  `
   SELECT u.nombre, d.departamento, COUNT(*) as proyectos
   FROM usuarios u 
   JOIN departamentos d ON u.dept_id = d.id
   WHERE u.activo = :activo AND u.fecha_creacion >= :desde
   GROUP BY u.nombre, d.departamento
   ORDER BY proyectos DESC
-`, { 
-  activo: 1, 
-  desde: new Date('2024-01-01') 
-});
+`,
+  {
+    activo: 1,
+    desde: new Date("2024-01-01"),
+  },
+);
 
 // Tipos de datos soportados
-const dataQuery = await querySQL(`
+const dataQuery = await querySQL(
+  `
   SELECT 
     :texto as campo_texto,
     :numero as campo_numero,
@@ -147,13 +151,15 @@ const dataQuery = await querySQL(`
     :fecha as campo_fecha,
     :booleano as campo_booleano
   FROM dual
-`, {
-  texto: "Ejemplo",
-  numero: 42,
-  decimal: 3.14159,
-  fecha: new Date(),
-  booleano: true
-});
+`,
+  {
+    texto: "Ejemplo",
+    numero: 42,
+    decimal: 3.14159,
+    fecha: new Date(),
+    booleano: true,
+  },
+);
 ```
 
 ### 3. Cache
@@ -288,7 +294,10 @@ const cleanData = validator.sanitizeData({
 ### 7. Procedimientos Almacenados
 
 ```typescript
-import { StoredProcedureExecutor, GenericController } from "https://raw.githubusercontent.com/jferreyradev/deno-oracle-lib/v1.0.0/mod.ts";
+import {
+  GenericController,
+  StoredProcedureExecutor,
+} from "https://raw.githubusercontent.com/jferreyradev/deno-oracle-lib/v1.0.0/mod.ts";
 
 // Ejecutor independiente
 const spExecutor = new StoredProcedureExecutor("MI_SCHEMA");
@@ -307,23 +316,26 @@ console.log("Tiempo ejecución:", resultado.executionTime + "ms");
 const edad = await spExecutor.executeFunction(
   "fn_calcular_edad",
   { p_fecha_nacimiento: new Date("1990-05-15") },
-  "NUMBER"
+  "NUMBER",
 );
 
 console.log("Edad calculada:", edad.returnValue);
 
 // Bloque PL/SQL anónimo
-const plsqlResult = await spExecutor.executePlSqlBlock(`
+const plsqlResult = await spExecutor.executePlSqlBlock(
+  `
   DECLARE
     v_count NUMBER;
   BEGIN
     SELECT COUNT(*) INTO v_count FROM usuarios WHERE activo = :p_activo;
     :resultado := 'Total usuarios: ' || v_count;
   END;
-`, {
-  p_activo: 1,
-  resultado: { dir: "OUT", type: "STRING" }
-});
+`,
+  {
+    p_activo: 1,
+    resultado: { dir: "OUT", type: "STRING" },
+  },
+);
 
 // Usar con GenericController
 const userController = new GenericController(userConfig, undefined, undefined, "MI_SCHEMA");
@@ -335,7 +347,7 @@ console.log("Procedimientos:", procedimientos);
 // Ejecutar procedimiento a través del controller
 await userController.executeStoredProcedure("sp_auditoria_usuario", {
   p_usuario_id: 123,
-  p_accion: "UPDATE"
+  p_accion: "UPDATE",
 });
 
 // Obtener información de un procedimiento
@@ -348,16 +360,21 @@ console.log("Parámetros:", info.parameters);
 La librería incluye ejemplos completos y ejecutables:
 
 ### **Ejemplo Básico** (`example.ts`)
+
 ```bash
 deno run --allow-net --allow-read example.ts
 ```
+
 Demuestra todas las funcionalidades principales con datos simulados.
 
 ### **Ejemplos de Consultas SQL** (`examples/sql-examples.ts`)
+
 ```bash
 deno run --allow-net --allow-read examples/sql-examples.ts
 ```
+
 Ejemplos específicos de:
+
 - Consultas SQL directas con parámetros
 - Paginación automática
 - SQL Builder dinámico
@@ -368,12 +385,15 @@ Ejemplos específicos de:
 - Procedimientos almacenados
 
 ### **Ejemplos de Procedimientos Almacenados** (`examples/stored-procedures.ts`)
+
 ```bash
 deno run --allow-net --allow-read examples/stored-procedures.ts
 ```
+
 Casos de uso específicos para procedimientos, funciones y bloques PL/SQL.
 
 ### **Estructura de Archivos**
+
 ```
 examples/
 ├── sql-examples.ts          # Ejemplos de consultas SQL
@@ -658,9 +678,9 @@ const config = configManager.fromEnvironment();
 await initializePool(oracledb, config);
 
 // Con prefijo personalizado
-const configCustom = configManager.fromEnvironment({ 
+const configCustom = configManager.fromEnvironment({
   prefix: "DB", // DB_USER, DB_PASSWORD, etc.
-  throwOnMissing: false 
+  throwOnMissing: false,
 });
 ```
 
@@ -700,7 +720,7 @@ import { configManager, initializePool } from "./mod.ts";
 
 const config = configManager.fromConnectionString(
   "prod-server:1521/PRODDB",
-  { user: "mi_usuario", password: "mi_password" }
+  { user: "mi_usuario", password: "mi_password" },
 );
 await initializePool(oracledb, config);
 ```
@@ -713,7 +733,7 @@ import { configManager, initializePool } from "./mod.ts";
 const config = configManager.fromComponents(
   { user: "usuario", password: "password" },
   { host: "db-server", port: 1521, serviceName: "PRODDB" },
-  { poolMax: 15, poolMin: 3 } // opciones del pool
+  { poolMax: 15, poolMin: 3 }, // opciones del pool
 );
 await initializePool(oracledb, config);
 ```
@@ -728,7 +748,7 @@ const config = await configManager.hybrid(
   "./config/database.json", // archivo base
   "production", // entorno
   true, // usar variables de entorno si están disponibles
-  { poolMax: 25 } // overrides específicos
+  { poolMax: 25 }, // overrides específicos
 );
 
 await initializePool(oracledb, config);
@@ -742,7 +762,7 @@ import { initializePoolWithConfig } from "./mod.ts";
 const customConfig = async () => {
   // Lógica personalizada (consultar servicio de credenciales, etc.)
   const credentials = await fetchCredentialsFromVault();
-  
+
   return {
     user: credentials.username,
     password: credentials.password,
@@ -759,7 +779,7 @@ await initializePoolWithConfig(oracledb, customConfig);
 ```typescript
 import { configManager } from "./mod.ts";
 
-const config = { /* tu configuración */ };
+const config = {/* tu configuración */};
 const validation = configManager.validate(config);
 
 if (!validation.isValid) {
@@ -772,22 +792,23 @@ await initializePool(oracledb, config);
 
 ### **Parámetros de Configuración Disponibles**
 
-| Parámetro | Tipo | Requerido | Descripción |
-|-----------|------|-----------|-------------|
-| `user` | string | ✅ | Usuario de la base de datos |
-| `password` | string | ✅ | Contraseña del usuario |
-| `connectString` | string | ✅ | String de conexión (host:puerto/servicio) |
-| `poolMax` | number | ❌ | Máximo conexiones del pool (default: 10) |
-| `poolMin` | number | ❌ | Mínimo conexiones del pool (default: 2) |
-| `poolIncrement` | number | ❌ | Incremento de conexiones (default: 2) |
-| `poolTimeout` | number | ❌ | Timeout del pool en segundos (default: 60) |
-| `poolPingInterval` | number | ❌ | Intervalo de ping en segundos (default: 60) |
-| `stmtCacheSize` | number | ❌ | Tamaño del cache de statements (default: 23) |
-| `libDir` | string | ❌ | Directorio de librerías Oracle |
+| Parámetro          | Tipo   | Requerido | Descripción                                  |
+| ------------------ | ------ | --------- | -------------------------------------------- |
+| `user`             | string | ✅        | Usuario de la base de datos                  |
+| `password`         | string | ✅        | Contraseña del usuario                       |
+| `connectString`    | string | ✅        | String de conexión (host:puerto/servicio)    |
+| `poolMax`          | number | ❌        | Máximo conexiones del pool (default: 10)     |
+| `poolMin`          | number | ❌        | Mínimo conexiones del pool (default: 2)      |
+| `poolIncrement`    | number | ❌        | Incremento de conexiones (default: 2)        |
+| `poolTimeout`      | number | ❌        | Timeout del pool en segundos (default: 60)   |
+| `poolPingInterval` | number | ❌        | Intervalo de ping en segundos (default: 60)  |
+| `stmtCacheSize`    | number | ❌        | Tamaño del cache de statements (default: 23) |
+| `libDir`           | string | ❌        | Directorio de librerías Oracle               |
 
 ### **Variables de Entorno Soportadas**
 
 Con prefijo `ORACLE_` (configurable):
+
 - `ORACLE_USER`
 - `ORACLE_PASSWORD`
 - `ORACLE_CONNECT_STRING`
@@ -802,6 +823,7 @@ Con prefijo `ORACLE_` (configurable):
 ### **Mejores Prácticas de Seguridad**
 
 🔐 **Seguridad:**
+
 - ❌ Nunca hardcodear credenciales en el código
 - ✅ Usar variables de entorno para producción
 - ✅ Usar archivos de config para desarrollo (con .gitignore)
@@ -809,12 +831,14 @@ Con prefijo `ORACLE_` (configurable):
 - ✅ Usar servicios de gestión de secretos en producción
 
 ⚡ **Rendimiento:**
+
 - Configurar `poolMax` según la carga esperada
 - Ajustar `poolTimeout` según la latencia de red
 - Usar `stmtCacheSize` para consultas repetitivas
 - Configurar `poolPingInterval` según la estabilidad de la red
 
 🛠️ **Mantenimiento:**
+
 - Separar configuración por entornos
 - Usar configuración híbrida para flexibilidad
 - Implementar validación de credenciales

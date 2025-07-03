@@ -32,24 +32,28 @@ deno fmt --check
 ## 🔍 Tipos de Contribuciones
 
 ### 🐛 Reportar Bugs
+
 - Usa el template de issue para bugs
 - Incluye pasos para reproducir
 - Especifica versión de Deno y OS
 - Incluye logs de error si es posible
 
 ### ✨ Solicitar Features
+
 - Usa el template de issue para features
 - Explica el caso de uso
 - Proporciona ejemplos de la API deseada
 - Discute la implementación si es posible
 
 ### 📖 Mejorar Documentación
+
 - Corrige errores tipográficos
 - Mejora ejemplos existentes
 - Agrega ejemplos de casos de uso
 - Traduce documentación (español/inglés)
 
 ### 🔧 Contribuir Código
+
 - Sigue las convenciones de estilo existentes
 - Agrega tests para nuevas funcionalidades
 - Actualiza documentación relevante
@@ -58,6 +62,7 @@ deno fmt --check
 ## 📝 Proceso de Desarrollo
 
 ### 1. Crear Branch
+
 ```bash
 git checkout -b feature/nueva-funcionalidad
 # o
@@ -65,12 +70,14 @@ git checkout -b fix/corregir-bug
 ```
 
 ### 2. Hacer Cambios
+
 - Escribe código claro y bien documentado
 - Sigue las convenciones TypeScript existentes
 - Agrega JSDoc a funciones públicas
 - Usa nombres descriptivos para variables y funciones
 
 ### 3. Ejecutar Tests
+
 ```bash
 # Tests unitarios
 deno run --allow-read --allow-net test.ts
@@ -87,6 +94,7 @@ deno fmt
 ```
 
 ### 4. Commit Changes
+
 ```bash
 git add .
 git commit -m "feat: agregar nueva funcionalidad X"
@@ -97,6 +105,7 @@ git commit -m "docs: actualizar ejemplo de Z"
 ```
 
 **Convenciones de Commit:**
+
 - `feat:` nueva funcionalidad
 - `fix:` corrección de bug
 - `docs:` cambios en documentación
@@ -106,11 +115,13 @@ git commit -m "docs: actualizar ejemplo de Z"
 - `chore:` mantención (dependencias, build, etc.)
 
 ### 5. Push y Pull Request
+
 ```bash
 git push origin feature/nueva-funcionalidad
 ```
 
 Luego crea un Pull Request desde GitHub con:
+
 - Título descriptivo
 - Descripción detallada de los cambios
 - Referencias a issues relacionados
@@ -119,12 +130,14 @@ Luego crea un Pull Request desde GitHub con:
 ## 🎯 Estándares de Código
 
 ### TypeScript
+
 - Usa tipos explícitos siempre que sea posible
 - Evita `any`, usa tipos específicos
 - Documenta funciones públicas con JSDoc
 - Sigue las convenciones de naming existentes
 
 ### Estructura de Archivos
+
 ```
 src/
 ├── cache.ts           # Gestión de cache
@@ -142,12 +155,14 @@ examples/
 ```
 
 ### Tests
+
 - Escribe tests para nuevas funcionalidades
 - Mantén tests existentes funcionando
 - Usa nombres descriptivos para tests
 - Incluye casos edge y manejo de errores
 
 ### Documentación
+
 - Actualiza README.md si es necesario
 - Agrega ejemplos para nuevas funcionalidades
 - Documenta parámetros y valores de retorno
@@ -156,6 +171,7 @@ examples/
 ## 🔍 Review Process
 
 ### Lo que Buscamos
+
 - ✅ Código limpio y bien estructurado
 - ✅ Tests que cubren la funcionalidad
 - ✅ Documentación actualizada
@@ -163,6 +179,7 @@ examples/
 - ✅ Compatibilidad con versiones de Deno soportadas
 
 ### Lo que Evitamos
+
 - ❌ Cambios masivos sin discusión previa
 - ❌ Código sin tests
 - ❌ Breaking changes sin justificación
@@ -193,6 +210,7 @@ examples/
 ## 🙏 Reconocimientos
 
 Todos los contributors serán reconocidos en:
+
 - README.md
 - Release notes
 - Hall of fame (contributors destacados)

@@ -6,7 +6,15 @@
  * 2. Ejecuta: deno run --allow-net --allow-read --allow-env example.ts
  */
 
-import { closePool, GenericController, initializePool, MemoryCache, querySQL, SqlBuilder, configManager } from "./mod.ts";
+import {
+  closePool,
+  configManager,
+  GenericController,
+  initializePool,
+  MemoryCache,
+  querySQL,
+  SqlBuilder,
+} from "./mod.ts";
 
 // EJEMPLOS DE CONFIGURACIÓN DE CREDENCIALES
 // ========================================
@@ -31,12 +39,13 @@ const _dbConfigEnv = () => configManager.fromEnvironment();
 const _dbConfigArchivo = () => configManager.fromFile("./config/database.json", "development");
 
 // 4. Configuración híbrida (recomendada para producción)
-const _dbConfigHibrido = () => configManager.hybrid(
-  "./config/database.json", // archivo base
-  "development", // entorno
-  true, // usar variables de entorno si están disponibles
-  { poolMax: 10 } // overrides específicos
-);
+const _dbConfigHibrido = () =>
+  configManager.hybrid(
+    "./config/database.json", // archivo base
+    "development", // entorno
+    true, // usar variables de entorno si están disponibles
+    { poolMax: 10 }, // overrides específicos
+  );
 
 // Seleccionar método de configuración
 const dbConfig = dbConfigDirecto; // Cambiar por el método preferido
@@ -79,15 +88,17 @@ async function ejemploBasico() {
       outFormat: 4001,
       fetchAsString: [],
       initOracleClient: () => {},
-      createPool: () => Promise.resolve({
-        getConnection: () => Promise.resolve({
-          execute: () => Promise.resolve({ rows: [{ mensaje: "Conexión exitosa!" }] }),
+      createPool: () =>
+        Promise.resolve({
+          getConnection: () =>
+            Promise.resolve({
+              execute: () => Promise.resolve({ rows: [{ mensaje: "Conexión exitosa!" }] }),
+              close: () => Promise.resolve(),
+            }),
           close: () => Promise.resolve(),
+          connectionsOpen: 2,
+          connectionsInUse: 0,
         }),
-        close: () => Promise.resolve(),
-        connectionsOpen: 2,
-        connectionsInUse: 0,
-      }),
     };
 
     await initializePool(mockOracledb, dbConfig);
@@ -173,7 +184,7 @@ CREATE TABLE usuarios (
 
     // 7.1 Consultas SQL Directas
     console.log("\n📋 1. Consultas SQL Directas con querySQL():");
-    
+
     // Consulta simple sin parámetros
     console.log("   • Consulta simple:");
     const simpleQuery = await querySQL("SELECT 'Hola Oracle!' as saludo, SYSDATE as fecha_actual FROM dual");
@@ -186,7 +197,7 @@ CREATE TABLE usuarios (
               :numero * 2 as doble, 
               TO_CHAR(SYSDATE, 'DD/MM/YYYY HH24:MI:SS') as timestamp 
        FROM dual`,
-      { mensaje: "Parámetros funcionan!", numero: 21 }
+      { mensaje: "Parámetros funcionan!", numero: 21 },
     );
     console.log("     Resultado:", paramQuery.rows?.[0]);
 
@@ -202,13 +213,13 @@ CREATE TABLE usuarios (
          :edad as edad_anos
        FROM dual
        WHERE :activo = 1`,
-      { edad: 25, nombre: "Juan Pérez", activo: 1 }
+      { edad: 25, nombre: "Juan Pérez", activo: 1 },
     );
     console.log("     Resultado:", multiCondQuery.rows?.[0]);
 
     // 7.2 Consultas con paginación
     console.log("\n📄 2. Consultas con Paginación:");
-    
+
     // Simulamos una consulta paginada (Oracle usará ROWNUM internamente)
     const paginatedQuery = await querySQL(
       `SELECT level as id, 
@@ -216,19 +227,19 @@ CREATE TABLE usuarios (
               'user' || level || '@test.com' as email,
               MOD(level, 2) as activo
        FROM dual CONNECT BY level <= 25`,
-      { limit: 5, offset: 10 }
+      { limit: 5, offset: 10 },
     );
     console.log("     Usuarios (página 3, 5 por página):", paginatedQuery.rows?.length, "registros");
     console.log("     Primeros 2:", paginatedQuery.rows?.slice(0, 2));
 
     // 7.3 SqlBuilder - Construcción dinámica
     console.log("\n🏗️ 3. SqlBuilder - Construcción Dinámica:");
-    
+
     // SELECT dinámico
     const dynamicSelect = sqlBuilder.buildSelectQuery({
-      filters: { activo: true, departamento: 'IT' },
-      orderBy: 'nombre',
-      orderDirection: 'ASC'
+      filters: { activo: true, departamento: "IT" },
+      orderBy: "nombre",
+      orderDirection: "ASC",
     });
     console.log("   • SELECT dinámico:");
     console.log("     SQL:", dynamicSelect.sql);
@@ -239,7 +250,7 @@ CREATE TABLE usuarios (
       nombre: "María García",
       email: "maria@empresa.com",
       departamento: "Ventas",
-      activo: true
+      activo: true,
     });
     console.log("   • INSERT dinámico:");
     console.log("     SQL:", dynamicInsert.sql);
@@ -248,7 +259,7 @@ CREATE TABLE usuarios (
     // UPDATE dinámico
     const dynamicUpdate = sqlBuilder.buildUpdateQuery(123, {
       nombre: "María Elena García",
-      departamento: "Marketing"
+      departamento: "Marketing",
     });
     console.log("   • UPDATE dinámico:");
     console.log("     SQL:", dynamicUpdate.sql);
@@ -262,7 +273,7 @@ CREATE TABLE usuarios (
 
     // 7.4 Consultas complejas
     console.log("\n🔬 4. Consultas Complejas:");
-    
+
     // Consulta con JOIN simulado
     const complexQuery = await querySQL(
       `SELECT 
@@ -289,7 +300,7 @@ CREATE TABLE usuarios (
          SELECT 2, 'Portal Web' as titulo FROM dual
        ) p ON u.proyecto_id = p.id
        WHERE u.nombre LIKE '%' || :busqueda || '%'`,
-      { busqueda: "a" }
+      { busqueda: "a" },
     );
     console.log("   • Consulta con JOINs:");
     console.log("     Empleados encontrados:", complexQuery.rows?.length);
@@ -312,17 +323,17 @@ CREATE TABLE usuarios (
          SELECT 55000, DATE '2023-02-05' FROM dual
        ) empleados
        WHERE salario >= :salario_minimo`,
-      { salario_minimo: 40000 }
+      { salario_minimo: 40000 },
     );
     console.log("   • Consulta con agregaciones:");
     console.log("     Estadísticas:", aggregateQuery.rows?.[0]);
 
     // 7.5 Transacciones simuladas
     console.log("\n💾 5. Manejo de Transacciones:");
-    
+
     console.log("   • Inicio de transacción simulada:");
     console.log("     - Validando datos...");
-    
+
     // Simulamos validación
     const validationQuery = await querySQL(
       `SELECT 
@@ -335,11 +346,11 @@ CREATE TABLE usuarios (
            ELSE 'INVALIDO'  
          END as nombre_valido
        FROM dual`,
-      { email: "nuevo@test.com", nombre: "Nuevo Usuario" }
+      { email: "nuevo@test.com", nombre: "Nuevo Usuario" },
     );
-    
+
     const validation = validationQuery.rows?.[0] as { email_valido: string; nombre_valido: string };
-    if (validation?.email_valido === 'VALIDO' && validation?.nombre_valido === 'VALIDO') {
+    if (validation?.email_valido === "VALIDO" && validation?.nombre_valido === "VALIDO") {
       console.log("     ✅ Validación exitosa");
       console.log("     - Ejecutando INSERT...");
       console.log("     - COMMIT simulado");
@@ -350,7 +361,7 @@ CREATE TABLE usuarios (
 
     // 7.6 Consultas con tipos de datos especiales
     console.log("\n🗃️ 6. Tipos de Datos Especiales:");
-    
+
     const dataTypesQuery = await querySQL(
       `SELECT 
          :texto as campo_texto,
@@ -365,15 +376,15 @@ CREATE TABLE usuarios (
         numero: 42,
         decimal: 3.14159,
         fecha: new Date(),
-        booleano: 1
-      }
+        booleano: 1,
+      },
     );
     console.log("   • Tipos de datos:");
     console.log("     Resultado:", dataTypesQuery.rows?.[0]);
 
     // 7.7 Consultas con manejo de errores
     console.log("\n⚠️ 7. Manejo de Errores:");
-    
+
     try {
       console.log("   • Intentando consulta con error sintáctico...");
       await querySQL("SELECT * FORM tabla_inexistente");
@@ -392,7 +403,7 @@ CREATE TABLE usuarios (
 
     // 7.8 Consultas de rendimiento
     console.log("\n⚡ 8. Pruebas de Rendimiento:");
-    
+
     const startTime = Date.now();
     const performanceQuery = await querySQL(
       `SELECT 
@@ -401,13 +412,13 @@ CREATE TABLE usuarios (
          SYSDATE as timestamp_generacion
        FROM dual 
        CONNECT BY level <= :cantidad`,
-      { cantidad: 1000 }
+      { cantidad: 1000 },
     );
     const endTime = Date.now();
-    
+
     console.log(`   • Generados ${performanceQuery.rows?.length} registros en ${endTime - startTime}ms`);
     console.log("   • Primeros 3 registros:", performanceQuery.rows?.slice(0, 3));
-    
+
     console.log("\n✅ Ejemplos de consultas SQL completados!");
 
     // 8. EJEMPLOS DE PROCEDIMIENTOS ALMACENADOS
@@ -416,10 +427,10 @@ CREATE TABLE usuarios (
 
     // 8.1 Crear ejecutor de procedimientos
     console.log("\n📞 1. StoredProcedureExecutor - Uso Básico:");
-    
+
     // Importar el ejecutor
     const _spExecutor = new (await import("./mod.ts")).StoredProcedureExecutor("DEMO_SCHEMA");
-    
+
     // Simular ejecución de procedimiento
     console.log("   • Ejecutando procedimiento almacenado:");
     console.log("     CALL sp_crear_usuario('Juan Pérez', 'juan@test.com', 1)");

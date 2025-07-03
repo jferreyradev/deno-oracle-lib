@@ -59,11 +59,11 @@ export class ConfigManager {
     const getEnvVar = (name: string, required = true): string | undefined => {
       const fullName = `${prefix}_${name}`;
       const value = Deno.env.get(fullName);
-      
+
       if (required && !value && throwOnMissing) {
         throw new Error(`Variable de entorno requerida no encontrada: ${fullName}`);
       }
-      
+
       return value;
     };
 
@@ -91,7 +91,7 @@ export class ConfigManager {
     try {
       const configText = await Deno.readTextFile(filePath);
       const configFile: ConfigFile = JSON.parse(configText);
-      
+
       const config = configFile[environment];
       if (!config) {
         throw new Error(`Configuración para entorno '${environment}' no encontrada en ${filePath}`);
@@ -125,10 +125,10 @@ export class ConfigManager {
   fromComponents(
     credentials: { user: string; password: string },
     connection: ConnectionStringComponents,
-    poolOptions?: Partial<DatabaseConfig>
+    poolOptions?: Partial<DatabaseConfig>,
   ): DatabaseConfig {
     const { host, port, serviceName, sid } = connection;
-    
+
     let connectString: string;
     if (serviceName) {
       connectString = `${host}:${port}/${serviceName}`;
@@ -162,7 +162,7 @@ export class ConfigManager {
     baseConfigPath?: string,
     environment = "development",
     envOverrides = true,
-    directOverrides?: Partial<DatabaseConfig>
+    directOverrides?: Partial<DatabaseConfig>,
   ): Promise<DatabaseConfig> {
     let config: DatabaseConfig;
 
@@ -242,12 +242,12 @@ export class ConfigManager {
     // host:port:sid
     // Easy Connect string
     const patterns = [
-      /^[\w.-]+:\d+\/[\w.-]+$/,  // host:port/service
-      /^[\w.-]+:\d+:[\w.-]+$/,   // host:port:sid
-      /^[\w.-]+:\d+$/,           // host:port (default service)
+      /^[\w.-]+:\d+\/[\w.-]+$/, // host:port/service
+      /^[\w.-]+:\d+:[\w.-]+$/, // host:port:sid
+      /^[\w.-]+:\d+$/, // host:port (default service)
     ];
 
-    return patterns.some(pattern => pattern.test(connectString));
+    return patterns.some((pattern) => pattern.test(connectString));
   }
 
   /**

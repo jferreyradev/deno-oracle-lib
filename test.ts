@@ -285,11 +285,11 @@ Deno.test("StoredProcedureExecutor - instantiation", () => {
 
 Deno.test("StoredProcedureExecutor - parameter mapping", () => {
   const executor = new StoredProcedureExecutor();
-  
+
   // Test private method access through class (for testing purposes)
   // Estos métodos son privados, pero podemos probar la funcionalidad públicamente
   assertExists(executor);
-  
+
   // El mapeo de tipos se probará cuando se ejecuten procedimientos reales
 });
 

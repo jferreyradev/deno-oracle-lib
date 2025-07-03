@@ -345,7 +345,7 @@ export async function closePool(): Promise<void> {
  */
 export async function initializePoolWithConfig(
   oracledb: OracleDriver,
-  configSource: DatabaseConfig | string | (() => Promise<DatabaseConfig>)
+  configSource: DatabaseConfig | string | (() => Promise<DatabaseConfig>),
 ): Promise<void> {
   let config: DatabaseConfig;
 

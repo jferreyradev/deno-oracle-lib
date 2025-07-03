@@ -3,11 +3,7 @@
  * Deno Oracle Library - Stored Procedures Examples
  */
 
-import {
-  GenericController,
-  StoredProcedureExecutor,
-  initializePool,
-} from "../mod.ts";
+import { GenericController, initializePool, StoredProcedureExecutor } from "../mod.ts";
 
 // Configuración de base de datos (ejemplo)
 const dbConfig = {
@@ -215,7 +211,6 @@ async function ejemplosProcedimientosAlmacenados() {
       p_fecha_desde: "2024-01-01",
       p_fecha_hasta: "2024-12-31",
     });
-
   } catch (error) {
     console.error("❌ Error en ejemplos:", error instanceof Error ? error.message : error);
   }

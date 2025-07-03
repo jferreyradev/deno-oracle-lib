@@ -47,6 +47,7 @@ export interface PaginatedResponse<T = Record<string, unknown>> {
 // Configuración de campo
 export interface FieldConfig {
   type: string;
+  column?: string; // Nombre de la columna en la base de datos
   length?: number;
   required?: boolean;
   primaryKey?: boolean;
@@ -93,19 +94,21 @@ export interface EntityConfig {
   tableName: string;
   primaryKey: string;
   autoIncrement?: boolean;
-  displayName: string;
-  description: string;
+  displayName?: string;
+  description?: string;
   fields: Record<string, FieldConfig>;
-  operations: {
-    create: boolean;
-    read: boolean;
-    update: boolean;
-    delete: boolean;
-    search: boolean;
-    paginate: boolean;
+  operations?: {
+    create?: boolean;
+    read?: boolean;
+    update?: boolean;
+    delete?: boolean;
+    search?: boolean;
+    paginate?: boolean;
   };
   filters?: Record<string, FilterConfig>;
   validations?: Record<string, ValidationConfig>;
+  validationSchema?: ValidationSchema;
+  cacheConfig?: CacheConfig;
   customActions?: Record<string, CustomActionConfig>;
 }
 
@@ -223,4 +226,20 @@ export interface StoredProcedureResult {
   resultSets?: Record<string, unknown>[][];
   returnValue?: unknown;
   executionTime?: number;
+}
+
+// Tipos para validación de esquemas
+export interface ValidationRule {
+  type: "string" | "number" | "boolean" | "date";
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  pattern?: RegExp;
+  default?: unknown;
+}
+
+export interface ValidationSchema {
+  [key: string]: ValidationRule;
 }

@@ -1,16 +1,10 @@
 /**
  * Ejemplos Completos de Configuración de Credenciales
- * 
+ *
  * Ejecutar con: deno run --allow-net --allow-read --allow-env --allow-write examples/config-examples.ts
  */
 
-import {
-  closePool,
-  configManager,
-  initializePool,
-  initializePoolWithConfig,
-  querySQL,
-} from "../mod.ts";
+import { closePool, configManager, initializePool, initializePoolWithConfig, querySQL } from "../mod.ts";
 
 // Mock del driver Oracle para ejemplos
 const mockOracledb = {
@@ -19,15 +13,17 @@ const mockOracledb = {
   outFormat: 4001,
   fetchAsString: [],
   initOracleClient: () => {},
-  createPool: () => Promise.resolve({
-    getConnection: () => Promise.resolve({
-      execute: () => Promise.resolve({ rows: [{ mensaje: "Conexión exitosa" }] }),
+  createPool: () =>
+    Promise.resolve({
+      getConnection: () =>
+        Promise.resolve({
+          execute: () => Promise.resolve({ rows: [{ mensaje: "Conexión exitosa" }] }),
+          close: () => Promise.resolve(),
+        }),
       close: () => Promise.resolve(),
+      connectionsOpen: 2,
+      connectionsInUse: 0,
     }),
-    close: () => Promise.resolve(),
-    connectionsOpen: 2,
-    connectionsInUse: 0,
-  })
 };
 
 async function ejemplosConfiguracion() {
@@ -38,7 +34,7 @@ async function ejemplosConfiguracion() {
     // 1. CONFIGURACIÓN DIRECTA (Método más simple)
     console.log("📋 1. CONFIGURACIÓN DIRECTA");
     console.log("===========================");
-    
+
     const configDirecta = {
       user: "mi_usuario",
       password: "mi_password",
@@ -49,7 +45,7 @@ async function ejemplosConfiguracion() {
 
     await initializePool(mockOracledb, configDirecta);
     console.log("✅ Pool inicializado con configuración directa");
-    
+
     const resultado1 = await querySQL("SELECT 'Método directo' as metodo FROM dual");
     console.log("📄 Resultado:", resultado1.rows?.[0]);
     await closePool();
@@ -98,7 +94,7 @@ async function ejemplosConfiguracion() {
 
     const configConnString = configManager.fromConnectionString(
       "prod-server:1521/PRODDB",
-      { user: "prod_user", password: "prod_pass" }
+      { user: "prod_user", password: "prod_pass" },
     );
     console.log("🔧 Config desde conn string:", configManager.getMaskedConfig(configConnString));
 
@@ -115,7 +111,7 @@ async function ejemplosConfiguracion() {
     const configComponentes = configManager.fromComponents(
       { user: "comp_user", password: "comp_pass" },
       { host: "db-server", port: 1521, serviceName: "COMPDB" },
-      { poolMax: 20, poolMin: 5 }
+      { poolMax: 20, poolMin: 5 },
     );
     console.log("🔧 Config desde componentes:", configManager.getMaskedConfig(configComponentes));
 
@@ -133,7 +129,7 @@ async function ejemplosConfiguracion() {
       "./config/database.json",
       "development",
       true, // usar env vars
-      { poolMax: 25, connectString: "override-server:1521/HYBRIDDB" } // overrides
+      { poolMax: 25, connectString: "override-server:1521/HYBRIDDB" }, // overrides
     );
     console.log("🔧 Config híbrida:", configManager.getMaskedConfig(configHibrida));
 
@@ -150,10 +146,10 @@ async function ejemplosConfiguracion() {
     const configPersonalizada = async () => {
       // Lógica personalizada para obtener credenciales
       console.log("🔍 Ejecutando lógica personalizada de configuración...");
-      
+
       // Simular consulta a un servicio de credenciales
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       return {
         user: "custom_user",
         password: "custom_password",
@@ -206,7 +202,7 @@ async function ejemplosConfiguracion() {
     console.log("=================================");
 
     const entornos = ["development", "test", "production"];
-    
+
     for (const entorno of entornos) {
       try {
         const configEntorno = await configManager.fromFile("./config/database.json", entorno);
@@ -239,7 +235,6 @@ async function ejemplosConfiguracion() {
 
     console.log("\n🎉 ¡EJEMPLOS DE CONFIGURACIÓN COMPLETADOS!");
     console.log("==========================================");
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error en ejemplos:", errorMessage);
