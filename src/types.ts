@@ -200,3 +200,27 @@ export interface OracleError extends Error {
   errorNum?: number;
   offset?: number;
 }
+
+// Tipos para procedimientos almacenados
+export interface StoredProcedureParam {
+  name: string;
+  type: "IN" | "OUT" | "IN_OUT";
+  dataType: "VARCHAR2" | "NUMBER" | "DATE" | "TIMESTAMP" | "CLOB" | "BLOB" | "CURSOR";
+  size?: number;
+  value?: unknown;
+}
+
+export interface StoredProcedureConfig {
+  name: string;
+  schema?: string;
+  parameters: StoredProcedureParam[];
+  description?: string;
+}
+
+export interface StoredProcedureResult {
+  success: boolean;
+  outParams?: Record<string, unknown>;
+  resultSets?: Record<string, unknown>[][];
+  returnValue?: unknown;
+  executionTime?: number;
+}

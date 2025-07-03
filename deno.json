@@ -1,12 +1,12 @@
 {
-  "name": "@deno/oracle-lib",
+  "name": "@jferreyradev/deno-oracle-lib",
   "version": "1.0.0",
   "description": "Librería reutilizable para Deno que proporciona una capa de abstracción completa para trabajar con Oracle Database",
-  "author": "Tu Nombre",
+  "author": "jferreyradev",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tu-usuario/deno-oracle-lib.git"
+    "url": "https://github.com/jferreyradev/deno-oracle-lib.git"
   },
   "keywords": ["deno", "oracle", "database", "sql", "crud", "cache", "typescript"],
   "exports": "./mod.ts",
@@ -22,6 +22,15 @@
     "rules": {
       "tags": ["recommended"]
     }
+  },
+  "scripts": {
+    "test": "deno run --allow-read --allow-net test.ts",
+    "test:examples": "deno run --allow-read --allow-net examples/sql-examples.ts && deno run --allow-read --allow-net --allow-env --allow-write examples/config-examples.ts",
+    "lint": "deno lint",
+    "fmt": "deno fmt",
+    "check": "deno check mod.ts",
+    "dev": "deno run --allow-read --allow-net --allow-env example.ts",
+    "build": "deno check mod.ts && deno lint && deno fmt --check"
   },
   "fmt": {
     "useTabs": false,

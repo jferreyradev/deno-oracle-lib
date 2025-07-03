@@ -7,7 +7,8 @@ import { MemoryCache } from "./cache.ts";
 import { SqlBuilder } from "./sql-builder.ts";
 import { DataValidator } from "./validator.ts";
 import { EntityConfigManager } from "./entity-config.ts";
-import type { EntityConfig, PaginatedResponse, QueryResult, SearchOptions, ValidationResult } from "./types.ts";
+import { StoredProcedureExecutor } from "./stored-procedure.ts";
+import type { EntityConfig, PaginatedResponse, QueryResult, SearchOptions, StoredProcedureResult, ValidationResult } from "./types.ts";
 
 export class GenericController {
   private entityConfig: EntityConfig;
@@ -15,11 +16,13 @@ export class GenericController {
   private validator: DataValidator;
   private cache: MemoryCache;
   private configManager: EntityConfigManager;
+  private storedProcedureExecutor: StoredProcedureExecutor;
 
   constructor(
     entityConfig: EntityConfig,
     cache?: MemoryCache,
     configManager?: EntityConfigManager,
+    schema?: string,
   ) {
     this.entityConfig = entityConfig;
     this.sqlBuilder = new SqlBuilder(entityConfig);
@@ -30,6 +33,7 @@ export class GenericController {
       cleanupInterval: 60000, // 1 minuto
     });
     this.configManager = configManager || new EntityConfigManager();
+    this.storedProcedureExecutor = new StoredProcedureExecutor(schema);
   }
 
   /**
@@ -317,6 +321,87 @@ export class GenericController {
       };
     } catch (error) {
       throw new Error(`Error obteniendo estadísticas: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  }
+
+  // === MÉTODOS PARA PROCEDIMIENTOS ALMACENADOS ===
+
+  /**
+   * Ejecuta un procedimiento almacenado
+   */
+  async executeStoredProcedure(
+    procedureName: string,
+    parameters: Record<string, unknown> = {},
+  ): Promise<StoredProcedureResult> {
+    try {
+      const result = await this.storedProcedureExecutor.execute(procedureName, parameters);
+
+      // Invalidar caché si el procedimiento podría haber modificado datos
+      if (procedureName.toLowerCase().includes(this.entityConfig.tableName.toLowerCase())) {
+        this.invalidateCache();
+      }
+
+      return result;
+    } catch (error) {
+      throw new Error(`Error ejecutando procedimiento '${procedureName}': ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  }
+
+  /**
+   * Ejecuta una función almacenada con valor de retorno
+   */
+  async executeStoredFunction(
+    functionName: string,
+    parameters: Record<string, unknown> = {},
+    returnType: "VARCHAR2" | "NUMBER" | "DATE" | "TIMESTAMP" = "VARCHAR2",
+  ): Promise<StoredProcedureResult> {
+    try {
+      return await this.storedProcedureExecutor.executeFunction(functionName, parameters, returnType);
+    } catch (error) {
+      throw new Error(`Error ejecutando función '${functionName}': ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  }
+
+  /**
+   * Ejecuta un bloque PL/SQL anónimo
+   */
+  async executePlSqlBlock(
+    plsqlBlock: string,
+    parameters: Record<string, unknown> = {},
+  ): Promise<StoredProcedureResult> {
+    try {
+      const result = await this.storedProcedureExecutor.executePlSqlBlock(plsqlBlock, parameters);
+
+      // Invalidar caché si el bloque podría haber modificado datos
+      if (plsqlBlock.toLowerCase().includes(this.entityConfig.tableName.toLowerCase())) {
+        this.invalidateCache();
+      }
+
+      return result;
+    } catch (error) {
+      throw new Error(`Error ejecutando bloque PL/SQL: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  }
+
+  /**
+   * Obtiene información de un procedimiento almacenado
+   */
+  async getStoredProcedureInfo(procedureName: string) {
+    try {
+      return await this.storedProcedureExecutor.getProcedureInfo(procedureName);
+    } catch (error) {
+      throw new Error(`Error obteniendo información del procedimiento: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  }
+
+  /**
+   * Lista todos los procedimientos disponibles
+   */
+  async listStoredProcedures(): Promise<string[]> {
+    try {
+      return await this.storedProcedureExecutor.listProcedures();
+    } catch (error) {
+      throw new Error(`Error listando procedimientos: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   }
 }

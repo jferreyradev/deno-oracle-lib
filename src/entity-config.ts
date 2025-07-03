@@ -22,8 +22,8 @@ export class EntityConfigManager {
 
     try {
       // Use globalThis.Deno to access Deno APIs
-      const configText = await (globalThis as { Deno: { readTextFile: (path: string) => Promise<string> } }).Deno
-        .readTextFile(this.configPath);
+      const denoGlobal = globalThis as unknown as { Deno: typeof Deno };
+      const configText = await denoGlobal.Deno.readTextFile(this.configPath);
       this.config = JSON.parse(configText) as AppConfig;
 
       // Validar configuración básica

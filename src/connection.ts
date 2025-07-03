@@ -339,3 +339,34 @@ export async function closePool(): Promise<void> {
     globalConnection = null;
   }
 }
+
+/**
+ * Inicializa el pool de conexiones con configuración flexible
+ */
+export async function initializePoolWithConfig(
+  oracledb: OracleDriver,
+  configSource: DatabaseConfig | string | (() => Promise<DatabaseConfig>)
+): Promise<void> {
+  let config: DatabaseConfig;
+
+  if (typeof configSource === "string") {
+    // Si es string, intentar cargar desde archivo
+    const { configManager } = await import("./config-manager.ts");
+    config = await configManager.fromFile(configSource);
+  } else if (typeof configSource === "function") {
+    // Si es función, ejecutarla para obtener config
+    config = await configSource();
+  } else {
+    // Si es objeto, usar directamente
+    config = configSource;
+  }
+
+  // Validar configuración
+  const { configManager } = await import("./config-manager.ts");
+  const validation = configManager.validate(config);
+  if (!validation.isValid) {
+    throw new Error(`Configuración inválida: ${validation.errors.join(", ")}`);
+  }
+
+  globalConnection = new OracleConnection(oracledb, config);
+}

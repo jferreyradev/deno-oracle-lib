@@ -6,16 +6,40 @@
  * 2. Ejecuta: deno run --allow-net --allow-read --allow-env example.ts
  */
 
-import { closePool, GenericController, initializePool, MemoryCache, querySQL, SqlBuilder } from "./mod.ts";
+import { closePool, GenericController, initializePool, MemoryCache, querySQL, SqlBuilder, configManager } from "./mod.ts";
 
-// Configuración de conexión (ajustar según tu entorno)
-const dbConfig = {
+// EJEMPLOS DE CONFIGURACIÓN DE CREDENCIALES
+// ========================================
+
+// 1. Configuración directa (más simple)
+const dbConfigDirecto = {
   user: "tu_usuario",
   password: "tu_password",
   connectString: "localhost:1521/XE",
   poolMin: 2,
   poolMax: 5,
 };
+
+// 2. Configuración desde variables de entorno
+// Establecer estas variables antes de ejecutar:
+// export ORACLE_USER=tu_usuario
+// export ORACLE_PASSWORD=tu_password
+// export ORACLE_CONNECT_STRING=localhost:1521/XE
+const _dbConfigEnv = () => configManager.fromEnvironment();
+
+// 3. Configuración desde archivo JSON
+const _dbConfigArchivo = () => configManager.fromFile("./config/database.json", "development");
+
+// 4. Configuración híbrida (recomendada para producción)
+const _dbConfigHibrido = () => configManager.hybrid(
+  "./config/database.json", // archivo base
+  "development", // entorno
+  true, // usar variables de entorno si están disponibles
+  { poolMax: 10 } // overrides específicos
+);
+
+// Seleccionar método de configuración
+const dbConfig = dbConfigDirecto; // Cambiar por el método preferido
 
 // Configuración de entidad de ejemplo
 const userEntityConfig = {
@@ -51,11 +75,19 @@ async function ejemploBasico() {
     // Por ahora, creamos un mock para el ejemplo
     const mockOracledb = {
       OUT_FORMAT_OBJECT: 4001,
-      getConnection: () =>
-        Promise.resolve({
+      CLOB: 4002,
+      outFormat: 4001,
+      fetchAsString: [],
+      initOracleClient: () => {},
+      createPool: () => Promise.resolve({
+        getConnection: () => Promise.resolve({
           execute: () => Promise.resolve({ rows: [{ mensaje: "Conexión exitosa!" }] }),
           close: () => Promise.resolve(),
         }),
+        close: () => Promise.resolve(),
+        connectionsOpen: 2,
+        connectionsInUse: 0,
+      }),
     };
 
     await initializePool(mockOracledb, dbConfig);
@@ -135,9 +167,296 @@ CREATE TABLE usuarios (
     const cacheStats = cache.getStats();
     console.log("📊 Estadísticas del cache:", cacheStats);
 
+    // 7. EJEMPLOS COMPLETOS DE CONSULTAS SQL
+    console.log("\n🔍 EJEMPLOS DE CONSULTAS SQL");
+    console.log("============================");
+
+    // 7.1 Consultas SQL Directas
+    console.log("\n📋 1. Consultas SQL Directas con querySQL():");
+    
+    // Consulta simple sin parámetros
+    console.log("   • Consulta simple:");
+    const simpleQuery = await querySQL("SELECT 'Hola Oracle!' as saludo, SYSDATE as fecha_actual FROM dual");
+    console.log("     Resultado:", simpleQuery.rows?.[0]);
+
+    // Consulta con parámetros
+    console.log("   • Consulta con parámetros:");
+    const paramQuery = await querySQL(
+      `SELECT :mensaje as mensaje, 
+              :numero * 2 as doble, 
+              TO_CHAR(SYSDATE, 'DD/MM/YYYY HH24:MI:SS') as timestamp 
+       FROM dual`,
+      { mensaje: "Parámetros funcionan!", numero: 21 }
+    );
+    console.log("     Resultado:", paramQuery.rows?.[0]);
+
+    // Consulta con múltiples condiciones
+    console.log("   • Consulta con múltiples condiciones:");
+    const multiCondQuery = await querySQL(
+      `SELECT 
+         CASE 
+           WHEN :edad >= 18 THEN 'Mayor de edad'
+           ELSE 'Menor de edad'
+         END as categoria,
+         :nombre as nombre_completo,
+         :edad as edad_anos
+       FROM dual
+       WHERE :activo = 1`,
+      { edad: 25, nombre: "Juan Pérez", activo: 1 }
+    );
+    console.log("     Resultado:", multiCondQuery.rows?.[0]);
+
+    // 7.2 Consultas con paginación
+    console.log("\n📄 2. Consultas con Paginación:");
+    
+    // Simulamos una consulta paginada (Oracle usará ROWNUM internamente)
+    const paginatedQuery = await querySQL(
+      `SELECT level as id, 
+              'Usuario ' || level as nombre,
+              'user' || level || '@test.com' as email,
+              MOD(level, 2) as activo
+       FROM dual CONNECT BY level <= 25`,
+      { limit: 5, offset: 10 }
+    );
+    console.log("     Usuarios (página 3, 5 por página):", paginatedQuery.rows?.length, "registros");
+    console.log("     Primeros 2:", paginatedQuery.rows?.slice(0, 2));
+
+    // 7.3 SqlBuilder - Construcción dinámica
+    console.log("\n🏗️ 3. SqlBuilder - Construcción Dinámica:");
+    
+    // SELECT dinámico
+    const dynamicSelect = sqlBuilder.buildSelectQuery({
+      filters: { activo: true, departamento: 'IT' },
+      orderBy: 'nombre',
+      orderDirection: 'ASC'
+    });
+    console.log("   • SELECT dinámico:");
+    console.log("     SQL:", dynamicSelect.sql);
+    console.log("     Parámetros:", dynamicSelect.params);
+
+    // INSERT dinámico
+    const dynamicInsert = sqlBuilder.buildInsertQuery({
+      nombre: "María García",
+      email: "maria@empresa.com",
+      departamento: "Ventas",
+      activo: true
+    });
+    console.log("   • INSERT dinámico:");
+    console.log("     SQL:", dynamicInsert.sql);
+    console.log("     Parámetros:", dynamicInsert.params);
+
+    // UPDATE dinámico
+    const dynamicUpdate = sqlBuilder.buildUpdateQuery(123, {
+      nombre: "María Elena García",
+      departamento: "Marketing"
+    });
+    console.log("   • UPDATE dinámico:");
+    console.log("     SQL:", dynamicUpdate.sql);
+    console.log("     Parámetros:", dynamicUpdate.params);
+
+    // DELETE dinámico
+    const dynamicDelete = sqlBuilder.buildDeleteQuery(123);
+    console.log("   • DELETE dinámico:");
+    console.log("     SQL:", dynamicDelete.sql);
+    console.log("     Parámetros:", dynamicDelete.params);
+
+    // 7.4 Consultas complejas
+    console.log("\n🔬 4. Consultas Complejas:");
+    
+    // Consulta con JOIN simulado
+    const complexQuery = await querySQL(
+      `SELECT 
+         u.id,
+         u.nombre,
+         u.email,
+         d.nombre as departamento,
+         p.titulo as proyecto
+       FROM (
+         SELECT 1 as id, 'Ana López' as nombre, 'ana@test.com' as email, 1 as dept_id, 1 as proyecto_id FROM dual
+         UNION ALL
+         SELECT 2, 'Carlos Ruiz', 'carlos@test.com', 2, 1 FROM dual
+         UNION ALL  
+         SELECT 3, 'Elena Vega', 'elena@test.com', 1, 2 FROM dual
+       ) u
+       JOIN (
+         SELECT 1 as id, 'Desarrollo' as nombre FROM dual
+         UNION ALL
+         SELECT 2, 'Marketing' FROM dual
+       ) d ON u.dept_id = d.id
+       JOIN (
+         SELECT 1 as id, 'Sistema CRM' as titulo FROM dual
+         UNION ALL
+         SELECT 2, 'Portal Web' as titulo FROM dual
+       ) p ON u.proyecto_id = p.id
+       WHERE u.nombre LIKE '%' || :busqueda || '%'`,
+      { busqueda: "a" }
+    );
+    console.log("   • Consulta con JOINs:");
+    console.log("     Empleados encontrados:", complexQuery.rows?.length);
+    console.log("     Resultados:", complexQuery.rows);
+
+    // Consulta con funciones de agregación
+    const aggregateQuery = await querySQL(
+      `SELECT 
+         COUNT(*) as total_empleados,
+         AVG(salario) as salario_promedio,
+         MIN(fecha_ingreso) as primer_ingreso,
+         MAX(fecha_ingreso) as ultimo_ingreso
+       FROM (
+         SELECT 45000 as salario, DATE '2020-01-15' as fecha_ingreso FROM dual
+         UNION ALL
+         SELECT 52000, DATE '2021-03-20' FROM dual
+         UNION ALL
+         SELECT 48000, DATE '2022-07-10' FROM dual
+         UNION ALL
+         SELECT 55000, DATE '2023-02-05' FROM dual
+       ) empleados
+       WHERE salario >= :salario_minimo`,
+      { salario_minimo: 40000 }
+    );
+    console.log("   • Consulta con agregaciones:");
+    console.log("     Estadísticas:", aggregateQuery.rows?.[0]);
+
+    // 7.5 Transacciones simuladas
+    console.log("\n💾 5. Manejo de Transacciones:");
+    
+    console.log("   • Inicio de transacción simulada:");
+    console.log("     - Validando datos...");
+    
+    // Simulamos validación
+    const validationQuery = await querySQL(
+      `SELECT 
+         CASE 
+           WHEN LENGTH(:email) > 5 AND INSTR(:email, '@') > 0 THEN 'VALIDO'
+           ELSE 'INVALIDO'
+         END as email_valido,
+         CASE
+           WHEN LENGTH(:nombre) >= 2 THEN 'VALIDO'
+           ELSE 'INVALIDO'  
+         END as nombre_valido
+       FROM dual`,
+      { email: "nuevo@test.com", nombre: "Nuevo Usuario" }
+    );
+    
+    const validation = validationQuery.rows?.[0] as { email_valido: string; nombre_valido: string };
+    if (validation?.email_valido === 'VALIDO' && validation?.nombre_valido === 'VALIDO') {
+      console.log("     ✅ Validación exitosa");
+      console.log("     - Ejecutando INSERT...");
+      console.log("     - COMMIT simulado");
+    } else {
+      console.log("     ❌ Error en validación");
+      console.log("     - ROLLBACK simulado");
+    }
+
+    // 7.6 Consultas con tipos de datos especiales
+    console.log("\n🗃️ 6. Tipos de Datos Especiales:");
+    
+    const dataTypesQuery = await querySQL(
+      `SELECT 
+         :texto as campo_texto,
+         :numero as campo_numero,
+         :decimal as campo_decimal,
+         :fecha as campo_fecha,
+         :booleano as campo_booleano,
+         CASE WHEN :booleano = 1 THEN 'SI' ELSE 'NO' END as bool_texto
+       FROM dual`,
+      {
+        texto: "Texto de ejemplo",
+        numero: 42,
+        decimal: 3.14159,
+        fecha: new Date(),
+        booleano: 1
+      }
+    );
+    console.log("   • Tipos de datos:");
+    console.log("     Resultado:", dataTypesQuery.rows?.[0]);
+
+    // 7.7 Consultas con manejo de errores
+    console.log("\n⚠️ 7. Manejo de Errores:");
+    
+    try {
+      console.log("   • Intentando consulta con error sintáctico...");
+      await querySQL("SELECT * FORM tabla_inexistente");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log("   ✅ Error capturado correctamente:", errorMessage.substring(0, 50) + "...");
+    }
+
+    try {
+      console.log("   • Intentando división por cero...");
+      await querySQL("SELECT 10/:divisor as resultado FROM dual", { divisor: 0 });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log("   ✅ Error matemático capturado:", errorMessage.substring(0, 50) + "...");
+    }
+
+    // 7.8 Consultas de rendimiento
+    console.log("\n⚡ 8. Pruebas de Rendimiento:");
+    
+    const startTime = Date.now();
+    const performanceQuery = await querySQL(
+      `SELECT 
+         level as numero,
+         'Registro ' || level as descripcion,
+         SYSDATE as timestamp_generacion
+       FROM dual 
+       CONNECT BY level <= :cantidad`,
+      { cantidad: 1000 }
+    );
+    const endTime = Date.now();
+    
+    console.log(`   • Generados ${performanceQuery.rows?.length} registros en ${endTime - startTime}ms`);
+    console.log("   • Primeros 3 registros:", performanceQuery.rows?.slice(0, 3));
+    
+    console.log("\n✅ Ejemplos de consultas SQL completados!");
+
+    // 8. EJEMPLOS DE PROCEDIMIENTOS ALMACENADOS
+    console.log("\n🏗️ EJEMPLOS DE PROCEDIMIENTOS ALMACENADOS");
+    console.log("==========================================");
+
+    // 8.1 Crear ejecutor de procedimientos
+    console.log("\n📞 1. StoredProcedureExecutor - Uso Básico:");
+    
+    // Importar el ejecutor
+    const _spExecutor = new (await import("./mod.ts")).StoredProcedureExecutor("DEMO_SCHEMA");
+    
+    // Simular ejecución de procedimiento
+    console.log("   • Ejecutando procedimiento almacenado:");
+    console.log("     CALL sp_crear_usuario('Juan Pérez', 'juan@test.com', 1)");
+    console.log("     Resultado simulado: { usuario_id: 123, mensaje: 'Usuario creado' }");
+
+    // 8.2 Procedimientos con parámetros OUT
+    console.log("\n📤 2. Procedimientos con Parámetros de Salida:");
+    console.log("   • CALL sp_validar_email('test@email.com', OUT resultado, OUT mensaje)");
+    console.log("     Resultado simulado: { resultado: 1, mensaje: 'Email válido' }");
+
+    // 8.3 Funciones con valor de retorno
+    console.log("\n🔢 3. Funciones Oracle:");
+    console.log("   • SELECT fn_calcular_edad('1990-05-15') FROM dual");
+    console.log("     Resultado simulado: { edad: 33 }");
+
+    // 8.4 Bloques PL/SQL anónimos
+    console.log("\n📜 4. Bloques PL/SQL Anónimos:");
+    console.log(`   • DECLARE
+           v_count NUMBER;
+         BEGIN
+           SELECT COUNT(*) INTO v_count FROM usuarios;
+           :resultado := 'Total: ' || v_count;
+         END;`);
+    console.log("     Resultado simulado: { resultado: 'Total: 150' }");
+
+    // 8.5 Integración con GenericController
+    console.log("\n🎮 5. Integración con GenericController:");
+    console.log("   • userController.executeStoredProcedure('sp_auditoria')");
+    console.log("   • userController.listStoredProcedures()");
+    console.log("   • userController.getStoredProcedureInfo('sp_crear_usuario')");
+
+    console.log("\n✅ Ejemplos de procedimientos almacenados completados!");
+
     console.log("✅ Ejemplo completado exitosamente!");
   } catch (error) {
-    console.error("❌ Error en el ejemplo:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ Error en el ejemplo:", errorMessage);
     console.log("💡 Asegúrate de:");
     console.log("   - Tener Oracle Database ejecutándose");
     console.log("   - Configurar correctamente las credenciales");

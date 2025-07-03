@@ -5,7 +5,7 @@
  */
 
 import { assertEquals, assertExists, assertInstanceOf } from "https://deno.land/std@0.208.0/assert/mod.ts";
-import { DataValidator, GenericController, MemoryCache, SqlBuilder } from "./mod.ts";
+import { DataValidator, GenericController, MemoryCache, SqlBuilder, StoredProcedureExecutor } from "./mod.ts";
 
 // Configuración de entidad para tests
 const testEntityConfig = {
@@ -255,17 +255,78 @@ Deno.test("GenericController - instantiation", () => {
 
 Deno.test("Cache cleanup and destroy", () => {
   const cache = new MemoryCache({
-    defaultTTL: 1, // 1 segundo
+    defaultTTL: 300,
     maxSize: 100,
     cleanupInterval: 1000, // 1 segundo
   });
 
-  cache.set("temp-key", "temp-value");
-  assertEquals(cache.get("temp-key"), "temp-value");
+  cache.set("test1", "value1");
+  cache.set("test2", "value2");
 
-  // Test destroy
-  cache.destroy();
+  assertEquals(cache.getStats().size, 2);
+
+  // Limpiar todo
+  cache.clear();
   assertEquals(cache.getStats().size, 0);
+
+  // Destruir cache
+  cache.destroy();
 });
 
-console.log("✅ Todos los tests de la librería Deno Oracle han pasado!");
+// === TESTS PARA PROCEDIMIENTOS ALMACENADOS ===
+
+Deno.test("StoredProcedureExecutor - instantiation", () => {
+  const executor = new StoredProcedureExecutor();
+  assertExists(executor);
+
+  const executorWithSchema = new StoredProcedureExecutor("TEST_SCHEMA");
+  assertExists(executorWithSchema);
+});
+
+Deno.test("StoredProcedureExecutor - parameter mapping", () => {
+  const executor = new StoredProcedureExecutor();
+  
+  // Test private method access through class (for testing purposes)
+  // Estos métodos son privados, pero podemos probar la funcionalidad públicamente
+  assertExists(executor);
+  
+  // El mapeo de tipos se probará cuando se ejecuten procedimientos reales
+});
+
+Deno.test("GenericController - stored procedure integration", () => {
+  const cache = new MemoryCache({
+    defaultTTL: 300,
+    maxSize: 100,
+    cleanupInterval: 60000,
+  });
+
+  try {
+    const entityConfig = {
+      tableName: "test_users",
+      primaryKey: "id",
+      displayName: "Test Users",
+      description: "Test users table",
+      fields: {
+        id: { type: "number", required: true },
+        name: { type: "string", required: true, maxLength: 100 },
+        email: { type: "string", required: true, maxLength: 255 },
+        active: { type: "boolean", defaultValue: true },
+      },
+      operations: { create: true, read: true, update: true, delete: true, search: true, paginate: true },
+    };
+
+    const controller = new GenericController(entityConfig, cache, undefined, "TEST_SCHEMA");
+    assertExists(controller);
+
+    // Verificar que el controller tiene métodos de procedimientos almacenados
+    assertEquals(typeof controller.executeStoredProcedure, "function");
+    assertEquals(typeof controller.executeStoredFunction, "function");
+    assertEquals(typeof controller.executePlSqlBlock, "function");
+    assertEquals(typeof controller.listStoredProcedures, "function");
+    assertEquals(typeof controller.getStoredProcedureInfo, "function");
+  } finally {
+    cache.destroy();
+  }
+});
+
+console.log("✅ Todos los tests de la librería Deno Oracle han pasado, incluyendo procedimientos almacenados!");

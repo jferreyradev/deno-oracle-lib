@@ -1,0 +1,27 @@
+{
+  "development": {
+    "user": "dev_user",
+    "password": "dev_password",
+    "connectString": "localhost:1521/XEPDB1",
+    "poolMax": 5,
+    "poolMin": 1
+  },
+  "test": {
+    "user": "test_user",
+    "password": "test_password",
+    "connectString": "localhost:1521/XEPDB1",
+    "poolMax": 3,
+    "poolMin": 1
+  },
+  "production": {
+    "user": "prod_user",
+    "password": "prod_password",
+    "connectString": "prod-db:1521/PRODDB",
+    "poolMax": 20,
+    "poolMin": 5,
+    "poolIncrement": 5,
+    "poolTimeout": 300,
+    "poolPingInterval": 120,
+    "stmtCacheSize": 50
+  }
+}
