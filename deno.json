@@ -1,0 +1,37 @@
+{
+  "name": "@deno/oracle-lib",
+  "version": "1.0.0",
+  "description": "Librería reutilizable para Deno que proporciona una capa de abstracción completa para trabajar con Oracle Database",
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/deno-oracle-lib.git"
+  },
+  "keywords": ["deno", "oracle", "database", "sql", "crud", "cache", "typescript"],
+  "exports": "./mod.ts",
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.ns"],
+    "strict": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": false
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 120,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
+  },
+  "test": {
+    "include": ["**/*_test.ts", "**/*_test.js", "**/test_*.ts", "**/test_*.js"]
+  }
+}

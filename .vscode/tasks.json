@@ -1,0 +1,56 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Deno: Check",
+      "type": "shell",
+      "command": "deno",
+      "args": [
+        "check",
+        "mod.ts"
+      ],
+      "group": "build",
+      "problemMatcher": [
+        "$deno"
+      ]
+    },
+    {
+      "label": "Deno: Lint",
+      "type": "shell",
+      "command": "deno",
+      "args": ["lint"],
+      "group": "build",
+      "problemMatcher": ["$deno"]
+    },
+    {
+      "label": "Deno: Format",
+      "type": "shell",
+      "command": "deno",
+      "args": ["fmt"],
+      "group": "build"
+    },
+    {
+      "label": "Deno: Test",
+      "type": "shell",
+      "command": "deno",
+      "args": ["test", "--allow-all"],
+      "group": "test",
+      "problemMatcher": ["$deno"]
+    },
+    {
+      "label": "Publish Library",
+      "type": "shell",
+      "command": "deno",
+      "args": ["run", "--allow-run", "--allow-read", "--allow-write", "scripts/publish.ts", "${input:version}"],
+      "group": "build"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "version",
+      "description": "Versión a publicar (ej: 1.0.0)",
+      "default": "1.0.0",
+      "type": "promptString"
+    }
+  ]
+}
